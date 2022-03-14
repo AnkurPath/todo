@@ -55,7 +55,7 @@ def update_task(request, id):
     messages.error(request, "Task could not be edited")
     return redirect("home")
 
-def delete_task(request):
+def delete_task(request,id):
     task = Post.objects.get(id=id)
     task.delete()
     messages.success(request, "Task deleted")
