@@ -86,22 +86,23 @@
       </div>
       </div>
       <div class="col-sm">
-        <h1 class="text-success">Work</h1>
+        <h1 class="text-info">Work</h1>
        
         {% for task in tasks %}
         <br>
-          <div class="panel panel-success col-sm-50 bg-success">
+          <div class="panel panel-success col-sm-50 bg-light">
             <div class="panel-heading">{{ task.title }}</div>
+            <div class="panel-heading">{{ task.notes }}</div>
             <div class="panel-body">{{ task.due_date }}</div>
             <div class="panel-body">{{ task.status }}</div>
           </div>
         {% endfor %}
       </div>
 
-      <div class="col-sm"><h1 class="text-success">edit</h1><br>
+      <div class="col-sm"><h1 class="text-warning">Edit</h1><br>
             <div class="col-sm">
               <div id="taskheading">
-                Edit task
+                Edit task(action disabled)
                             </div>
               
               <div>
