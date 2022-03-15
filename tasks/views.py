@@ -56,10 +56,16 @@ def update_task(request, id):
     return redirect("home")
 
 def delete_task(request,id):
-    task = Post.objects.get(id=id)
-    task.delete()
-    messages.success(request, "Task deleted")
+
+    if request.method=="DELETE":
+        task = Post.objects.get(id=id)
+        task.delete()
+        messages.success(request, "Task deleted")
+        return redirect("home")
+
+    messages.error(request, "Task could not be deleted")
     return redirect("home")
+    
 
 def app_sync(data):
     with open(BASE_DIR / "configuration.json", "r") as f:
