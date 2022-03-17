@@ -1,3 +1,4 @@
+
 from django.shortcuts import redirect, render
 from tasks.models import Post
 from django.contrib import messages
@@ -19,6 +20,7 @@ def home(request):
 @csrf_exempt
 def add_task(request):
  
+    print(request.body)
     data = {
         "title": request.POST.get('title'),
         "notes": request.POST.get('notes'),
@@ -27,10 +29,13 @@ def add_task(request):
         "status": request.POST.get('status')
     }
 
-    
+    print(data)
+
     if request.method=="POST":
 
         task = app_sync(data)
+
+        print(task)
 
         form = Post(title=data['title'], notes=data['notes'], start_date=data['start_date'], 
                 due_date=data['due_date'], status=data['status'],gid = task['data']['gid'])
@@ -43,29 +48,72 @@ def add_task(request):
     messages.error(request, "Task could not be added")
     return redirect(home)
 
+@csrf_exempt
 def update_task(request, id):
-    task = Post.objects.get(id=id)
-    form = Post(request.POST, instance=task)
+    with open(BASE_DIR / "configuration.json", "r") as f:
+            configs = json.load(f)
 
-    if form.is_valid():
-        form.save()
+    gid = Post.objects.get(id=id).gid
+    
+    endpoint = f"https://app.asana.com/api/1.0/tasks/{gid}"
+    
+    headers = {"Authorization": "Bearer "+configs['bearer-token'],
+    "Content-Type": "application/json",
+    "Accept": "application/json"}
+
+    data = {
+        "title": request.POST.get('title'),
+        "notes": request.POST.get('notes'),
+        "start_date": request.POST.get('start_Date'),
+        "due_date": request.POST.get('due_Date'),
+        "status": request.POST.get('status')
+    }
+
+    form = Post(id=id, title=data['title'], notes=data['notes'], start_date=data["start_date"], due_date=data["due_date"], 
+    status=data["status"], gid=request.POST.get('gid'))
+
+    form.save()
+
+    task = {
+        "data": {
+            "assignee": "me",
+            "assignee_status": data["status"],
+            "due_on": data["due_date"],
+            "name": data["title"],
+            "notes": data["notes"],
+            "start_on": data['start_date']
+        }
+    }
+    
+    res = requests.put(endpoint, headers=headers, data=json.dumps(task))
+    
+    if res.status_code==200:
         messages.success(request, "Task edited successfully")
-        return redirect("home")
-    
-    messages.error(request, "Task could not be edited")
-    return redirect("home")
+    else:
+        messages.error(request, "Task could not be edited")
+    return redirect(home)
 
-def delete_task(request,id):
+@csrf_exempt
+def delete_task(request, id):
+    with open(BASE_DIR / "configuration.json", "r") as f:
+            configs = json.load(f)
 
-    if request.method=="DELETE":
-        task = Post.objects.get(id=id)
-        task.delete()
+    task = Post.objects.get(id=id)
+    gid = task.gid
+    task.delete()
+
+    endpoint = f"https://app.asana.com/api/1.0/tasks/{gid}"
+    headers = {"Authorization": "Bearer "+configs['bearer-token'],
+    "Accept": "application/json"}
+
+    res = requests.delete(endpoint, headers=headers)
+
+    if res.status_code==200:
         messages.success(request, "Task deleted")
-        return redirect("home")
+    else:
+        messages.error(request, "Delete request failed")
 
-    messages.error(request, "Task could not be deleted")
-    return redirect("home")
-    
+    return redirect(home)
 
 def app_sync(data):
     with open(BASE_DIR / "configuration.json", "r") as f:
