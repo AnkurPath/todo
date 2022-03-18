@@ -66,9 +66,9 @@
       <div id="data">
         <nav class="navbar navbar-expand-sm bg-light">
         <ul class="navbar-nav">
-          <li class="nav-item"><a class="nav-link" href="" id="list">list</a></li>
+          <!-- <li class="nav-item"><a class="nav-link" href="" id="list">list</a></li>
           <li class="nav-item"><a class="nav-link" href="" id="tags">Tags</a></li>
-          <li class="nav-item"><a class="nav-link" href="" id="custom">Custom</a></li>         
+          <li class="nav-item"><a class="nav-link" href="" id="custom">Custom</a></li>          -->
       </ul>
     </nav>
       </div>
@@ -76,7 +76,7 @@
       </div>
       <div id="filters">
         <ul class="list-group list-group-horizontal">
-          <li class="list-group-item" id="filters"><a href="" >Filters</a></li>               
+          <!-- <li class="list-group-item" id="filters"><a href="" >Filters</a></li>                -->
       </ul>
       </div>
       <div id="filterappend">
@@ -88,28 +88,28 @@
       <div class="col-sm">
         <h1 class="text-info">Work</h1>
        
-        {% for task in tasks %}
+        {% for task in tasks.data %}
         <br>
-          <div class="panel panel-success col-sm-50 bg-light">
-            <div class="panel-heading">{{ task.title }}</div>
-            <div class="panel-heading">{{ task.notes }}</div>
-            <div class="panel-body">{{ task.due_date }}</div>
-            <div class="panel-body">{{ task.status }}</div>
-            <button type="button" class="btn btn-danger">Delete(only UI)</button>
+          <div class="panel panel-success col-sm-50 bg-light" id="{{ task.gid }}">
+            <div class="panel-heading" id="title{{task.gid}}">{{ task.name }}</div>
+            <div class="panel-heading" id="notes{{task.gid}}">{{ task.notes }}</div>
+            <div class="panel-body" id="start_date{{task.gid}}">{{ task.start_on }}</div>
+            <div class="panel-body" id="due_date{{task.gid}}">{{ task.due_on }}</div>
+            <div class="panel-body" id="status{{task.gid}}">{{ task.status }}</div>
+            
+            <i class="fas fa-edit"></i><button type="button" class="btn btn-info editTask">Edit</button>
+            
+            <i class="fa fa-trash" aria-hidden="true"></i><button type="button" class="btn btn-danger deleteTask">Delete</button> 
           </div>
         {% endfor %}
       </div>
 
-      <div class="col-sm"><h1 class="text-warning">Edit</h1><br>
+      <div class="col-sm"><h1 class="text-warning"></h1><br>
             <div class="col-sm">
-              <div id="taskheading">
-                Edit task(action disabled)
-                            </div>
-              
-              <div>
-               <a href="">summary</a> <i class="fas fa-edit"></i><label>edit</label>  
+             
+                 
 
-              </div>
+             
               <div id="taskdetail">
 
               </div>
@@ -133,6 +133,8 @@
   
 </html>
 <script>
+  $(document).ready(function()
+{
   $("#save").click(function(){debugger;
           $("#modalRegisterForm").modal('hide');
           var title = $("#title").val();
@@ -153,6 +155,94 @@
         }, // serializes the form's elements.success: function(data)
         success : function(result){
             alert(result);
+        },
+        error : function(e) {
+            console.log(e);
+        }
+    });
+  });
+  $(".deleteTask").on("click",function(e){debugger;
+    var id=$(this).parent('div').attr('id');
+    $.ajax({
+        type: "POST",
+        url: "/todo/delete-task/"+id,
+        data: {
+            id:id
+
+        }, // serializes the form's elements.success: function(data)
+        success : function(result){
+            console.log(result);
+            window.location.href="http://127.0.0.1:8000/todo/home";
+        },
+        error : function(e) {
+            console.log(e);
+        }
+    });
+
+  }
+  )
+  $(".editTask").on("click",function(e){debugger;
+    var id=$(this).parent('div').attr('id');
+    var title=$("#title"+id).text();
+    var notes=$("#notes"+id).text();
+    var start_date=$("#start_date"+id).text();
+    var due_Date=$("#due_date"+id).text();
+    var status=$("#status"+id).text();
+
+    var str ="<div class='modal-body mx-3'>";
+        str+="<div class=md-form mb-5'>";
+        str+="<label data-success='right'>Title</label>";
+        str+="<input type='text' value='"+title+"' id='edittitle' class='form-control validate' name='title'>";
+        str+="</div>";
+        str+="<div class='md-form mb-5'>";
+        str+="<label data-success='right' >Notes</label>";
+        str+="<input type='text' value='"+notes+"' id='editnotes' class='form-control validate' name='notes'>";              
+        str+="</div>";
+        str+="<div class='md-form mb-5'>";
+        str+="<label data-success='right'>Start Date</label>";
+        str+="<input type='date' value='"+start_date+"' id='editstartDate' class='form-control validate' name='start_Date'>";           
+        str+="</div>";
+        str+="<div class='md-form mb-5'>";
+        str+="<label data-success='right'>Due Date</label>";
+        str+="<input type='date' value='"+due_Date+"' id='editdueDate' class='form-control validate' name='due_Date'>";             
+        str+="</div>";    
+        str+="<div class='dropdown md-form mb-5'>";
+        str+="<select value='"+status+"'id='edittaskStatus' class='form-control validate' name='status'>";
+        str+="<option value='upcoming'>Upcoming</option>";
+        str+="<option value='activeTask'>Active Task</option>";
+        str+="</select>";
+        str+="</div>";
+        str+="<div id='"+id+"' class='modal-footer d-flex justify-content-center'>";
+        str+="<button id='editsave' class='btn btn-success'>save</button>";
+        str+="</div>";
+        str+="</div>";
+        
+    $("#taskdetail").html(str);
+    
+  }
+  );
+  $(document).on('click','#editsave', function(e){debugger; 
+    e.preventDefault() ;
+          var id=$("#editsave").parent('div').attr('id'); 
+          var title = $("#edittitle").val();
+          var notes=$("#editnotes").val();
+          var startDate=$("#editstartDate").val();
+          var dueDate=$("#editdueDate").val();
+          var status=$("#edittaskStatus").val();
+          $.ajax({
+        type: "POST",
+        url: "/todo/update-task/"+id,
+        data: {
+            title : title,
+            notes: notes,
+            start_Date:startDate,
+            due_Date:dueDate,
+            status:status
+
+        }, // serializes the form's elements.success: function(data)
+        success : function(result){
+            console.log(result);
+            window.location.href="http://127.0.0.1:8000/todo/home";
         },
         error : function(e) {
             console.log(e);
@@ -190,4 +280,5 @@
     $("#filterappend").html(str);
 
   })
+});
 </script>
